@@ -25,7 +25,12 @@ public class HQLExamples {
 		Query query = session.createQuery("from Employee");
 		List<Employee> empList = query.list();
 		for(Employee emp : empList){
-			System.out.println("List of Employees::"+emp.getId()+","+emp.getAddress().getCity());
+//			System.out.println("List of Employees::"+emp.getId()+","+emp.getAddress().getCity());
+			System.out.println("List of Employees::" +
+						emp.getId() + "," +
+						emp.getName() + "," +
+						emp.getAddress().getCity());
+			
 		}
 		
 		//Get Employee with id
@@ -33,6 +38,26 @@ public class HQLExamples {
 		query.setLong("id", 3);
 		Employee emp = (Employee) query.uniqueResult();
 		System.out.println("Employee Name="+emp.getName()+", City="+emp.getAddress().getCity());
+		
+		
+		//Get Employee with id and name rjm-debug - THIS worked !!!
+		// maybe issue when passing Query object by reference to a method
+		query = session.createQuery("from Employee where id= :id and name= :name"); // rjm-debug
+		query.setLong("id", 4);
+		query.setParameter("name", "Jack");  // rjm-debug
+		emp = (Employee) query.uniqueResult();
+		System.out.println("Employee Name="+emp.getName()+", City="+emp.getAddress().getCity());
+		
+		// rjm-debug - dynamic query test CASE !!
+		long id = 4;
+		String name = "Jack";
+		String q = "from Employee where id= " + id + " and name= '" + name + "'";		
+		query = session.createQuery(q); // rjm-debug
+		//query.setLong("id", 4);
+		//query.setParameter("name", "Jack");  // rjm-debug
+		emp = (Employee) query.uniqueResult();
+		System.out.println("Employee Name="+emp.getName()+", City="+emp.getAddress().getCity());
+		
 		
 		//Update Employee
 		query = session.createQuery("update Employee set name= :name where id= :id");
@@ -65,6 +90,12 @@ public class HQLExamples {
 			System.out.println(Arrays.toString(arr));
 		}
 		
+		// rjm-debug
+		//someMoreQueries(session,query);
+		//someMoreQueries1(session,query);
+		
+		
+		
 		//rolling back to save the test data
 		tx.rollback();
 		
@@ -72,4 +103,94 @@ public class HQLExamples {
 		sessionFactory.close();
 	}
 
+	
+	private static void someMoreQueries1(Session session, Query query) {
+		/*
+		this does NOT work when passing
+		Session session, Query query
+		by reference  !!!
+		
+		must access both of these 
+		Session session, Query query
+		within the scope/context of where they are creatED		
+				
+	
+		*/
+		query = session.createQuery("from Employee where id= :id and name= :name"); // rjm-debug
+		query.setLong("id", 4);
+		query.setParameter("name", "Jack");  // rjm-debug
+		Employee emp = (Employee) query.uniqueResult();
+		System.out.println("Employee Name="+emp.getName()+", City="+emp.getAddress().getCity());
+
+	}
+	
+	
+	private static void someMoreQueries(Session session, Query query) {
+		
+		long id = 4;
+		String name = "Jack";
+		
+		//query = session.createQuery("from Employee where id= :id");
+		//query = session.createQuery("from Employee where id= :id and name= :name");
+		// use static values
+		
+		//query = session.createQuery("from Employee where id= 4 and name= 'Jack'"); // not working, getting NULL
+//		query = session.createQuery("from Employee where Employee.id= 4 and Employee.name= 'Jack'"); // not valid		
+		
+		query = session.createQuery("from Employee where id= ? and name= ?"); // not working
+		
+		query.setLong(0, id);
+		query.setParameter(1, name);		
+		
+		/*
+		query.setLong("id", id);
+		//query.setString("name", name); did NOT work
+		query.setParameter("name", name);
+		
+http://www.javawebtutor.com/articles/hibernate/hibernate_query_language_hql_example.php		
+		String hql = "from Stock s where s.stockCode = ? and s.stockName = ?";
+List result = session.createQuery(hql)
+.setString(0, "1234")
+.setParameter(1, "HUL")
+.list();
+
+		String qString = query.getQueryString();
+		System.out.println("qString: " + qString);
+		String [] nParmas = query.getNamedParameters();
+		System.out.println("getNamedParameters: " + nParmas);
+		
+		
+		*/
+			
+
+/*
+		query = session.createQuery("from Employee where id= :id");
+		query.setLong("id", 3);
+		Employee emp = (Employee) query.uniqueResult();
+*/
+		
+		
+		//Object o = query.uniqueResult();
+		
+		Employee emp = (Employee) query.uniqueResult();
+		
+		if (emp == null) {
+			
+			System.out.println("id: " + id +
+					" name: " + name +
+					" NOT FOUND!");
+			
+		} else {
+		
+		System.out.println("someMoreQueries() query by id and name Employee Name = "+
+		  emp.getName() +
+		  ", City=" +
+		  emp.getAddress().getCity());
+		
+		}	
+
+		
+		
+	}
+	
 }
