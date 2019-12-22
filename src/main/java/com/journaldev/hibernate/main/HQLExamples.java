@@ -11,14 +11,25 @@ import org.hibernate.Transaction;
 import com.journaldev.hibernate.model.Employee;
 import com.journaldev.hibernate.util.HibernateUtil;
 
+import service.QueryService;
+
 public class HQLExamples {
+	
+	
+	private static SessionFactory sessionFactory = null;
+	private static Session session = null;
+
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		
 		//Prep work
-		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-		Session session = sessionFactory.getCurrentSession();
+//		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+	//	Session session = sessionFactory.getCurrentSession();
+		
+		sessionFactory = HibernateUtil.getSessionFactory();
+		session = sessionFactory.getCurrentSession();
+		
 		
 		//Get All Employees
 		Transaction tx = session.beginTransaction();
@@ -59,6 +70,13 @@ public class HQLExamples {
 		System.out.println("Employee Name="+emp.getName()+", City="+emp.getAddress().getCity());
 		
 		
+		Object o = QueryService.getInstance().query(q);
+		if (o instanceof Employee) {			
+			Employee e = (Employee)o;
+			System.out.println("(QueryService) Employee Name="+e.getName()+", City="+e.getAddress().getCity());
+		}
+		
+		
 		//Update Employee
 		query = session.createQuery("update Employee set name= :name where id= :id");
 		query.setParameter("name", "Pankaj Kumar");
@@ -92,7 +110,8 @@ public class HQLExamples {
 		
 		// rjm-debug
 		//someMoreQueries(session,query);
-		//someMoreQueries1(session,query);
+//		someMoreQueries1(session);
+		someMoreQueries1();		
 		
 		
 		
@@ -104,11 +123,16 @@ public class HQLExamples {
 	}
 
 	
-	private static void someMoreQueries1(Session session, Query query) {
+	private static void someMoreQueries1() {
 		/*
 		this does NOT work when passing
 		Session session, Query query
 		by reference  !!!
+		
+		or just the Session object
+		it may also be related to the static modifier;
+		
+		
 		
 		must access both of these 
 		Session session, Query query
@@ -116,7 +140,7 @@ public class HQLExamples {
 				
 	
 		*/
-		query = session.createQuery("from Employee where id= :id and name= :name"); // rjm-debug
+		Query query = session.createQuery("from Employee where id= :id and name= :name"); // rjm-debug
 		query.setLong("id", 4);
 		query.setParameter("name", "Jack");  // rjm-debug
 		Employee emp = (Employee) query.uniqueResult();
